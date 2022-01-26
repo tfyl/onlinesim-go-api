@@ -19,10 +19,13 @@ func (c *GetNumbers) Price(country int, service string) (error, int) {
 	m := make(map[string]string)
 	m["service"] = service
 	m["country"] = strconv.Itoa(country)
-	result := c.client.get("getPrice", m)
+	result, err := c.client.getWithErr("getPrice", m)
+	if err != nil {
+		return err, 0
+	}
 
 	response := PriceResponse{}
-	err := json.Unmarshal(result, &response)
+	err = json.Unmarshal(result, &response)
 	if err != nil {
 		return fmt.Errorf("%w", err), 0
 	}
@@ -43,10 +46,13 @@ func (c *GetNumbers) Get(service string, country int) (error, int) {
 	m := make(map[string]string)
 	m["service"] = service
 	m["country"] = strconv.Itoa(country)
-	result := c.client.get("getNum", m)
+	result, err := c.client.getWithErr("getNum", m)
+	if err != nil {
+		return fmt.Errorf("%w", err), 0
+	}
 
 	response := GetResponse{}
-	err := json.Unmarshal(result, &response)
+	err = json.Unmarshal(result, &response)
 	if err != nil {
 		return fmt.Errorf("%w", err), 0
 	}
@@ -89,9 +95,12 @@ func (c *GetNumbers) State(message_to_code int, orderby Order) (error, StateResp
 	m["msg_list"] = "1"
 	m["clean"] = "0"
 	m["type"] = "index"
-	result := c.client.get("getState", m)
+	result, err := c.client.getWithErr("getState", m)
+	if err != nil {
+		return fmt.Errorf("%w", err), nil
+	}
 
-	err := c.client.checkEmptyResponse(result)
+	err = c.client.checkEmptyResponse(result)
 	if err != nil {
 		return fmt.Errorf("%w", err), nil
 	}
@@ -112,9 +121,12 @@ func (c *GetNumbers) StateOne(tzid int, message_to_code int) (error, State) {
 	m["msg_list"] = "1"
 	m["clean"] = "0"
 	m["type"] = "index"
-	result := c.client.get("getState", m)
+	result, err := c.client.getWithErr("getState", m)
+	if err != nil {
+		return fmt.Errorf("%w", err), State{}
+	}
 
-	err := c.client.checkEmptyResponse(result)
+	err = c.client.checkEmptyResponse(result)
 	if err != nil {
 		return fmt.Errorf("%w", err), State{}
 	}
@@ -131,10 +143,13 @@ func (c *GetNumbers) StateOne(tzid int, message_to_code int) (error, State) {
 func (c *GetNumbers) Next(tzid int) (error, bool) {
 	m := make(map[string]string)
 	m["tzid"] = strconv.Itoa(tzid)
-	result := c.client.get("setOperationRevise", m)
+	result, err := c.client.getWithErr("setOperationRevise", m)
+	if err != nil {
+		return fmt.Errorf("%w", err), false
+	}
 
 	response := Default{}
-	err := json.Unmarshal(result, &response)
+	err = json.Unmarshal(result, &response)
 	if err != nil {
 		return fmt.Errorf("%w", err), false
 	}
@@ -149,10 +164,13 @@ func (c *GetNumbers) Next(tzid int) (error, bool) {
 func (c *GetNumbers) Close(tzid int) (error, bool) {
 	m := make(map[string]string)
 	m["tzid"] = strconv.Itoa(tzid)
-	result := c.client.get("setOperationOk", m)
+	result, err := c.client.getWithErr("setOperationOk", m)
+	if err != nil {
+		return fmt.Errorf("%w", err), false
+	}
 
 	response := Default{}
-	err := json.Unmarshal(result, &response)
+	err = json.Unmarshal(result, &response)
 	if err != nil {
 		return fmt.Errorf("%w", err), false
 	}
@@ -187,8 +205,11 @@ type Service struct {
 func (c *GetNumbers) Tariffs() (error, map[string]TariffsResponse) {
 	m := make(map[string]string)
 	m["country"] = "all"
-	result := c.client.get("getNumbersStats", m)
-	err := c.client.checkEmptyResponse(result)
+	result, err := c.client.getWithErr("getNumbersStats", m)
+	if err != nil {
+		return fmt.Errorf("%w", err), nil
+	}
+	err = c.client.checkEmptyResponse(result)
 	if err != nil {
 		return fmt.Errorf("%w", err), map[string]TariffsResponse{}
 	}
@@ -205,9 +226,12 @@ func (c *GetNumbers) Tariffs() (error, map[string]TariffsResponse) {
 func (c *GetNumbers) TariffsOne(country int) (error, TariffsResponse) {
 	m := make(map[string]string)
 	m["country"] = strconv.Itoa(country)
-	result := c.client.get("getNumbersStats", m)
+	result, err := c.client.getWithErr("getNumbersStats", m)
+	if err != nil {
+		return fmt.Errorf("%w", err), TariffsResponse{}
+	}
 
-	err := c.client.checkEmptyResponse(result)
+	err = c.client.checkEmptyResponse(result)
 	if err != nil {
 		return fmt.Errorf("%w", err), TariffsResponse{}
 	}
@@ -228,10 +252,13 @@ type ServiceResponse struct {
 
 func (c *GetNumbers) Service() (error, []string) {
 	m := make(map[string]string)
-	result := c.client.get("getService", m)
+	result, err := c.client.getWithErr("getService", m)
+	if err != nil {
+		return fmt.Errorf("%w", err), nil
+	}
 
 	response := ServiceResponse{}
-	err := json.Unmarshal(result, &response)
+	err = json.Unmarshal(result, &response)
 	if err != nil {
 		return fmt.Errorf("%w", err), nil
 	}
@@ -252,10 +279,13 @@ type ServiceNumberResponse struct {
 func (c *GetNumbers) ServiceNumber(service string) (error, []string) {
 	m := make(map[string]string)
 	m["service"] = service
-	result := c.client.get("getServiceNumber", m)
+	result, err := c.client.getWithErr("getServiceNumber", m)
+	if err != nil {
+		return fmt.Errorf("%w", err), nil
+	}
 
 	response := ServiceNumberResponse{}
-	err := json.Unmarshal(result, &response)
+	err = json.Unmarshal(result, &response)
 	if err != nil {
 		return fmt.Errorf("%w", err), nil
 	}

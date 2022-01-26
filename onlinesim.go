@@ -88,6 +88,43 @@ func (at *Onlinesim) get(method string, params map[string]string) []byte {
 	return []byte(bodyString)
 }
 
+func (at *Onlinesim) getWithErr(method string, params map[string]string) ([]byte, error) {
+	at.rateLimit()
+	params["apikey"] = at.apiKey
+	params["lang"] = at.lang
+	params["dev_id"] = at.dev_id
+
+	url := fmt.Sprintf("%s/%s.php", at.baseURL, method)
+
+	var client *httpclient.HttpClient
+	if at.proxy != "" {
+		client = httpclient.WithOption(httpclient.OPT_PROXY_FUNC, func(*http.Request) (int, string, error) {
+			return httpclient.PROXY_HTTP, at.proxy, nil
+		}).Defaults(httpclient.Map{
+			httpclient.OPT_USERAGENT:  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36",
+			"Accept-Language":         "en-us",
+			httpclient.OPT_UNSAFE_TLS: true,
+		})
+	} else {
+		client = httpclient.Defaults(httpclient.Map{
+			httpclient.OPT_USERAGENT:  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36",
+			"Accept-Language":         "en-us",
+			httpclient.OPT_UNSAFE_TLS: true,
+		})
+	}
+
+	res, err := client.Get(url, params)
+	if err != nil {
+		return nil, fmt.Errorf("request error: %w", err)
+	}
+	bodyString, err := res.ToString()
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(bodyString), nil
+}
+
 func (at *Onlinesim) checkResponse(resp interface{}) error {
 	if fmt.Sprintf("%v", resp) != "1" {
 		return fmt.Errorf("%s", resp)
