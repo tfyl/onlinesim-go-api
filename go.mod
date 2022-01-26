@@ -1,4 +1,4 @@
-module github.com/s00d/onlinesim-go-api
+module github.com/tfyl/onlinesim-go-api
 
 go 1.12
 
