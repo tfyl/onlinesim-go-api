@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ddliu/go-httpclient"
+	"net/http"
 	"time"
 )
 
@@ -18,13 +19,14 @@ type Onlinesim struct {
 	apiKey      string
 	lang        string
 	dev_id      string
+	proxy       string
 }
 
 type Default struct {
 	Response interface{} `json:"response"`
 }
 
-func NewClient(apiKey string, lang string, dev_id string) *Onlinesim {
+func NewClient(apiKey string, lang string, dev_id string, proxy string) *Onlinesim {
 	if lang == "" {
 		lang = "en"
 	}
@@ -35,6 +37,7 @@ func NewClient(apiKey string, lang string, dev_id string) *Onlinesim {
 		baseURL:     baseURL,
 		lang:        lang,
 		dev_id:      dev_id,
+		proxy:       proxy,
 	}
 }
 
@@ -56,15 +59,24 @@ func (at *Onlinesim) get(method string, params map[string]string) []byte {
 
 	url := fmt.Sprintf("%s/%s.php", at.baseURL, method)
 
-	httpclient.Defaults(httpclient.Map{
-		httpclient.OPT_USERAGENT: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36",
-		"Accept-Language":        "en-us",
-		//httpclient.OPT_PROXY:      "127.0.0.1:4034",
-		//httpclient.OPT_PROXYTYPE:  httpclient.PROXY_HTTP,
-		httpclient.OPT_UNSAFE_TLS: true,
-	})
+	var client *httpclient.HttpClient
+	if at.proxy != "" {
+		client = httpclient.WithOption(httpclient.OPT_PROXY_FUNC, func(*http.Request) (int, string, error) {
+			return httpclient.PROXY_HTTP, at.proxy, nil
+		}).Defaults(httpclient.Map{
+			httpclient.OPT_USERAGENT:  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36",
+			"Accept-Language":         "en-us",
+			httpclient.OPT_UNSAFE_TLS: true,
+		})
+	} else {
+		client = httpclient.Defaults(httpclient.Map{
+			httpclient.OPT_USERAGENT:  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.89 Safari/537.36",
+			"Accept-Language":         "en-us",
+			httpclient.OPT_UNSAFE_TLS: true,
+		})
+	}
 
-	res, err := httpclient.Get(url, params)
+	res, err := client.Get(url, params)
 	if err != nil {
 		panic(fmt.Errorf("request error: %w", err))
 	}
